@@ -46,11 +46,13 @@ async function main() {
     // Custom iterator function to handle errors for individual messages
     const safeIterator = {
       [Symbol.asyncIterator]() {
+        // Create the original iterator only once
+        const originalIterator = stream[Symbol.asyncIterator]();
+        
         return {
           next: async () => {
             try {
-              // Get the next message from the original stream's iterator
-              const originalIterator = stream[Symbol.asyncIterator]();
+              // Use the same iterator instance for each next() call
               const result = await originalIterator.next();
               return result;
             } catch (error) {
