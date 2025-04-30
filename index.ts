@@ -48,16 +48,47 @@ async function main() {
       [Symbol.asyncIterator]() {
         // Create the original iterator only once
         const originalIterator = stream[Symbol.asyncIterator]();
+        let consecutiveErrors = 0;
+        let lastErrorTime = 0;
         
         return {
           next: async () => {
             try {
               // Use the same iterator instance for each next() call
               const result = await originalIterator.next();
+              
+              // Reset error counter on successful iteration
+              if (!result.done) {
+                consecutiveErrors = 0;
+              }
+              
               return result;
             } catch (error) {
               // Log the error but don't stop the stream
               console.error("Error processing message from stream:", error);
+              
+              // Track consecutive errors
+              consecutiveErrors++;
+              const now = Date.now();
+              
+              // If we're getting stuck in a loop of errors, try to forcibly advance
+              // Either we've had multiple consecutive errors or we're stuck on the same error for too long
+              if (consecutiveErrors > 3 || (now - lastErrorTime < 1000 && consecutiveErrors > 1)) {
+                console.warn(`Detected ${consecutiveErrors} consecutive errors, attempting to force stream advancement`);
+                
+                // Try to "jiggle" the iterator by calling next() in a try/catch
+                // If this also fails, we'll still return a non-done result to keep the loop going
+                try {
+                  // Attempt to advance the iterator
+                  await originalIterator.next();
+                  console.log("Successfully advanced past problematic message");
+                } catch (advanceError) {
+                  console.error("Failed to advance past problematic message:", advanceError);
+                }
+              }
+              
+              lastErrorTime = now;
+              
               // Return a special value indicating an error occurred but keep going
               return { value: undefined, done: false };
             }
