@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@xmtp/content-type-wallet-send-calls": "^1.0.0",
-    "@xmtp/node-sdk": "4.0.1",
+    "@xmtp/node-sdk": "4.0.3",
     "dotenv": "^16.5.0",
     "uint8arrays": "^5.1.0",
     "viem": "^2.26.3"
