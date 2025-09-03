@@ -95,6 +95,7 @@ async function main() {
         "/key-check members - List all members' inbox IDs in the current conversation\n" +
         "/key-check version - Show XMTP SDK version information\n" +
         "/key-check uptime - Show when the bot started and how long it has been running\n" +
+        "/key-check dm <INBOX_ID> - Create a new DM conversation with the specified inbox ID\n" +
         "/key-check debug - Show debug information for the key-check bot\n" +
         "/key-check help - Show this help message\n" +
         "Note: You can use /kc as a shorthand for all commands (e.g., /kc help)";
@@ -134,6 +135,23 @@ async function main() {
       
       await conversation.send(uptimeText);
       console.log(`Sent uptime information: ${uptimeText}`);
+      continue;
+    }
+
+    // Handle dm command
+    if (command === "dm" && parts.length > 2) {
+      const targetInboxId = parts[2];
+      console.log(`Creating DM with inbox ID: ${targetInboxId}`);
+      
+      try {
+        const dmConversation = await client.conversations.newDm(targetInboxId);
+        await dmConversation.send(`Hello, this is a DM conversation requested by ${message.senderInboxId}.`);
+        await conversation.send(`✅ Successfully created DM with inbox ID: ${targetInboxId}\nConversation ID: ${dmConversation.id}`);
+        console.log(`Created DM with ${targetInboxId}, conversation ID: ${dmConversation.id}`);
+      } catch (error) {
+        console.error(`Error creating DM with ${targetInboxId}:`, error);
+        await conversation.send(`❌ Error creating DM with inbox ID ${targetInboxId}: ${error.message}`);
+      }
       continue;
     }
 
