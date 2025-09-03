@@ -33,7 +33,7 @@ async function main() {
     loggingLevel: LogLevel.debug,
   });
 
-  // await client.revokeAllOtherInstallations();
+  await client.revokeAllOtherInstallations();
 
   const identifier = await signer.getIdentifier();
   const address = identifier.identifier;
