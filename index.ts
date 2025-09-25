@@ -179,15 +179,7 @@ async function main() {
       console.log(`Setting minimum version for group: ${message.conversationId}`);
       
       try {
-        // Check if this conversation is a Group
-        if (conversation instanceof Group) {
-          await (conversation as any).updateGroupMinVersionToMatchSelf();
-          await conversation.send(`✅ Successfully updated the group's minimum version to match the bot's version.`);
-          console.log(`Updated minimum version for group: ${message.conversationId}`);
-        } else {
-          await conversation.send(`❌ This command can only be used in group conversations.`);
-          console.log(`set-min-version command attempted in non-group conversation: ${message.conversationId}`);
-        }
+        await conversation.updateGroupMinVersionToMatchSelf();
       } catch (error) {
         console.error(`Error updating minimum version for group ${message.conversationId}:`, error);
         await conversation.send(`❌ Error updating group minimum version: ${error.message}`);
