@@ -1,6 +1,6 @@
 import { createSigner, getEncryptionKeyFromHex } from "./helpers/client";
 import { logAgentDetails, validateEnvironment } from "./helpers/utils";
-import { Client, GroupMember, IdentifierKind, KeyPackageStatus, LogLevel, type XmtpEnv } from "@xmtp/node-sdk";
+import { Client, Group, GroupMember, IdentifierKind, KeyPackageStatus, LogLevel, type XmtpEnv } from "@xmtp/node-sdk";
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 
@@ -96,6 +96,8 @@ async function main() {
         "/key-check version - Show XMTP SDK version information\n" +
         "/key-check uptime - Show when the bot started and how long it has been running\n" +
         "/key-check dm <INBOX_ID> - Create a new DM conversation with the specified inbox ID\n" +
+        "/key-check group <INBOX_ID> - Create a new group conversation with the specified inbox ID\n" +
+        "/key-check set-min-version - Update the current group's minimum version to match the bot's version\n" +
         "/key-check debug - Show debug information for the key-check bot\n" +
         "/key-check help - Show this help message\n" +
         "Note: You can use /kc as a shorthand for all commands (e.g., /kc help)";
@@ -151,6 +153,44 @@ async function main() {
       } catch (error) {
         console.error(`Error creating DM with ${targetInboxId}:`, error);
         await conversation.send(`❌ Error creating DM with inbox ID ${targetInboxId}: ${error.message}`);
+      }
+      continue;
+    }
+
+    // Handle group command
+    if (command === "group" && parts.length > 2) {
+      const targetInboxId = parts[2];
+      console.log(`Creating group with inbox ID: ${targetInboxId}`);
+      
+      try {
+        const groupConversation = await client.conversations.newGroup([targetInboxId]);
+        await groupConversation.send(`Hello! This is a new group conversation created by the key-check bot. Invited member: ${targetInboxId}`);
+        await conversation.send(`✅ Successfully created group with inbox ID: ${targetInboxId}\nGroup Conversation ID: ${groupConversation.id}`);
+        console.log(`Created group with ${targetInboxId}, conversation ID: ${groupConversation.id}`);
+      } catch (error) {
+        console.error(`Error creating group with ${targetInboxId}:`, error);
+        await conversation.send(`❌ Error creating group with inbox ID ${targetInboxId}: ${error.message}`);
+      }
+      continue;
+    }
+
+    // Handle set-min-version command
+    if (command === "set-min-version") {
+      console.log(`Setting minimum version for group: ${message.conversationId}`);
+      
+      try {
+        // Check if this conversation is a Group
+        if (conversation instanceof Group) {
+          await (conversation as any).updateGroupMinVersionToMatchSelf();
+          await conversation.send(`✅ Successfully updated the group's minimum version to match the bot's version.`);
+          console.log(`Updated minimum version for group: ${message.conversationId}`);
+        } else {
+          await conversation.send(`❌ This command can only be used in group conversations.`);
+          console.log(`set-min-version command attempted in non-group conversation: ${message.conversationId}`);
+        }
+      } catch (error) {
+        console.error(`Error updating minimum version for group ${message.conversationId}:`, error);
+        await conversation.send(`❌ Error updating group minimum version: ${error.message}`);
       }
       continue;
     }
